@@ -968,7 +968,7 @@ class Plotly:
 
 
         def faceData(vertices, faces, dictionaries=None, color="#FAFAFA", colorKey=None,
-                     opacity=0.5, labelKey=None, groupKey=None,
+                     opacity=0.5, labelKey=None, groupKey=None, opacityKey=None,
                      minGroup=None, maxGroup=None, groups=[], legendLabel="Topology Faces",
                      legendGroup=3, legendRank=3, showLegend=True, intensities=None, colorScale="viridis"):
             x = []
@@ -986,7 +986,8 @@ class Plotly:
             label = ""
             group = ""
             color = Color.AnyToHex(color)
-            if colorKey or labelKey or groupKey:
+            global_opacity = True
+            if colorKey or labelKey or groupKey or opacityKey:
                 if groups:
                     if len(groups) > 0:
                         if type(groups[0]) == int or type(groups[0]) == float:
@@ -1021,6 +1022,13 @@ class Plotly:
                                     labels[m] = str(label) # Replace the default label with the dictionary label
                             if not groupKey == None:
                                 group = Dictionary.ValueAtKey(d, key=groupKey) or None
+                            if opacityKey is not None:
+                                face_opacity = Dictionary.ValueAtKey(d, key=opacityKey)
+                                face_opacity = face_opacity if face_opacity is not None else opacity
+                                # bake the opacity in the face color
+                                f_color_rgb = Color.ByHEX(groupList[m])
+                                groupList[m] = Color.PlotlyColor(f_color_rgb, alpha=face_opacity, useAlpha=True)
+                                global_opacity = False
                         
                         if group == None:
                             pass # do nothing because the default color will be used.
@@ -1061,7 +1069,7 @@ class Plotly:
                     cmin = 0,
                     cmax = 1,
                     intensity = intensities,
-                    opacity = opacity,
+                    opacity = opacity if global_opacity else 1,  # Set opacity to 1 if it was baked into the facecolors
                     hoverinfo = 'text',
                     text = labels,
                     hovertext = labels,
@@ -1208,7 +1216,7 @@ class Plotly:
                     vertices = geo['vertices']
                     faces = geo['faces']
                     if len(faces) > 0:
-                        data.append(faceData(vertices, faces, dictionaries=f_dictionaries, color=faceColor, colorKey=faceColorKey, opacity=faceOpacity, labelKey=faceLabelKey, groupKey=faceGroupKey, minGroup=faceMinGroup, maxGroup=faceMaxGroup, groups=faceGroups, legendLabel=faceLegendLabel, legendGroup=faceLegendGroup, legendRank=faceLegendRank, showLegend=showFaceLegend, intensities=intensityList, colorScale=colorScale))
+                        data.append(faceData(vertices, faces, dictionaries=f_dictionaries, color=faceColor, colorKey=faceColorKey, opacity=faceOpacity, opacityKey=faceOpacityKey, labelKey=faceLabelKey, groupKey=faceGroupKey, minGroup=faceMinGroup, maxGroup=faceMaxGroup, groups=faceGroups, legendLabel=faceLegendLabel, legendGroup=faceLegendGroup, legendRank=faceLegendRank, showLegend=showFaceLegend, intensities=intensityList, colorScale=colorScale))
         return data
 
     @staticmethod
